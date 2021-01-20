@@ -57,7 +57,7 @@ class GamePlaysSeeder extends Seeder
         $faker = Faker::create();
         $this->player_id = $faker->numberBetween($min = 1, $max = Player::count());
         $this->version_id = $faker->numberBetween($min = 1, $max = Version::count());
-        $this->other_id = $faker->numberBetween($min = 1, $max = Player::count());
+        $this->other_id = $faker->numberBetween($min = 0, $max = Player::count());
         $this->date_played = date('Y-m-d', strtotime("-" . $day . " days"));
     }
 
@@ -78,12 +78,13 @@ class GamePlaysSeeder extends Seeder
         if($this->notPlayedBeforeAdded($this->date_played, $this->getGameDate($this->version_id))){
 
             //check if player played alone
-            if($this->other_id == 0){
+            if($this->other_id == 0 || $this->player_id == $this->other_id){
                 //if they played alone, insert if not exist on the database
                 //where other_id = 0, player_id and version_id and date_played
-                $gameplay = GamePlay::firstOrCreate(["other_id" => $this->other_id, "player_id" => $this->player_id, "version_id" => $this->version_id, "date_played" => $this->date_played]);
+                $gameplay = GamePlay::firstOrCreate(["other_id" => 0, "player_id" => $this->player_id, "version_id" => $this->version_id, "date_played" => $this->date_played]);
                 
                 if($gameplay->wasRecentlyCreated){
+                    $otherPlayer = Other::create(["game_play_id" => $gameplay->id, "player_id" => 0]);
                     return true;
                 }
             }
